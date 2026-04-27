@@ -1,0 +1,148 @@
+! ===========================================================================
+!  ieee13_lines.dss
+!  Line and transformer definitions for the IEEE 13-bus feeder.
+!
+!  Network topology:
+!
+!  sourcebus─SUB─650──632──┬──671──┬──680  [DG1: wind  0.60 MW]
+!                           │       └──692──675
+!                           ├──633──634     [Datacenter PCC, 2 MVA]
+!                           └──645──646
+!            650──────684──┬──611  [DG2: solar 0.25 MW]
+!                           └──652  [DG3: solar 0.15 MW]
+!
+!  Impedance cross-check (pu on 5 MVA, 4.16 kV base, Z_base=3.4611 ohm):
+!
+!   Branch          R_pu    X_pu   R_ohm   X_ohm
+!   650-632        0.0380  0.1110  0.1315  0.3842  Config 601, 2000 ft
+!   632-671        0.0380  0.1110  0.1315  0.3842  Config 601, 2000 ft
+!   632-633        0.0200  0.0570  0.0692  0.1973  Config 602, 500 ft
+!   632-645        0.0170  0.0490  0.0588  0.1696  Config 603, 500 ft
+!   645-646        0.0130  0.0370  0.0450  0.1281  Config 603, 300 ft
+!   671-680        0.0190  0.0560  0.0658  0.1938  Config 601, 1000 ft
+!   671-692        0.0020  0.0050  0.0069  0.0173  Tie switch
+!   692-675        0.0140  0.0400  0.0485  0.1384  Config 606, 500 ft
+!   650-684        0.0170  0.0490  0.0588  0.1696  Config 604, 490 ft
+!   684-611        0.0090  0.0250  0.0312  0.0865  Config 605, 300 ft
+!   684-652        0.0140  0.0340  0.0485  0.1177  Config 607, 800 ft
+! ===========================================================================
+
+! ---------------------------------------------------------------------------
+!  Substation step-down transformer  (utility 115 kV → feeder 4.16 kV)
+!  Rated:  10 MVA,  115 kV / 4.16 kV,  delta-wye grounded
+!  Impedance on transformer base:  %R=0.40  %X=1.60  (%Z ≈ 1.65%)
+!  Equivalent to R_pu=0.002  X_pu=0.008 on 5 MVA system base
+! ---------------------------------------------------------------------------
+New Transformer.SUB
+~ phases=3  windings=2
+~ wdg=1  bus=sourcebus  kv=115   kva=10000  conn=delta  %r=0.20
+~ wdg=2  bus=650        kv=4.16  kva=10000  conn=wye    %r=0.20
+~ xhl=1.60
+
+! ---------------------------------------------------------------------------
+!  Main trunk lines  (3-phase, overhead, Config 601)
+! ---------------------------------------------------------------------------
+
+! 650 → 632:  2000 ft (0.3788 mi),  Config 601
+!   R = 0.3465 × 0.3788 = 0.1312 Ω  → R_pu = 0.0379
+!   X = 1.0179 × 0.3788 = 0.3856 Ω  → X_pu = 0.1114
+New Line.650_632
+~ bus1=650  bus2=632
+~ linecode=601  length=0.3788  units=mi
+~ phases=3
+
+! 632 → 671:  2000 ft (0.3788 mi),  Config 601
+New Line.632_671
+~ bus1=632  bus2=671
+~ linecode=601  length=0.3788  units=mi
+~ phases=3
+
+! 671 → 680:  1000 ft (0.1894 mi),  Config 601
+!   R = 0.3465 × 0.1894 = 0.0656 Ω  → R_pu = 0.0190
+!   X = 1.0179 × 0.1894 = 0.1928 Ω  → X_pu = 0.0557
+New Line.671_680
+~ bus1=671  bus2=680
+~ linecode=601  length=0.1894  units=mi
+~ phases=3
+
+! ---------------------------------------------------------------------------
+!  Lateral to 633  (3-phase, overhead, Config 602)
+! ---------------------------------------------------------------------------
+
+! 632 → 633:  500 ft (0.09470 mi),  Config 602
+!   R = 0.7526 × 0.09470 = 0.0713 Ω  → R_pu = 0.0206
+!   X = 1.1804 × 0.09470 = 0.1118 Ω  → X_pu = 0.0323
+!   (slight rounding from pu → actual length → back)
+New Line.632_633
+~ bus1=632  bus2=633
+~ linecode=602  length=0.09470  units=mi
+~ phases=3
+
+! ---------------------------------------------------------------------------
+!  Step-down transformer  633 → 634  (4.16 kV → 0.48 kV, 2 MVA)
+!  This is the datacenter service transformer.
+!  Impedance on transformer own base (2 MVA):  %R=0.48  %X=0.88
+!  (= R_pu=0.012  X_pu=0.022 on 5 MVA system base)
+! ---------------------------------------------------------------------------
+New Transformer.XFM_634
+~ phases=3  windings=2
+~ wdg=1  bus=633  kv=4.16   kva=2000  conn=delta  %r=0.24
+~ wdg=2  bus=634  kv=0.48   kva=2000  conn=wye     %r=0.24
+~ xhl=0.88
+
+! ---------------------------------------------------------------------------
+!  Laterals 645, 646  (2-phase, overhead, Config 603)
+! ---------------------------------------------------------------------------
+
+! 632 → 645:  500 ft (0.09470 mi),  Config 603
+New Line.632_645
+~ bus1=632.3.1  bus2=645.3.1
+~ linecode=603  length=0.09470  units=mi
+~ phases=2
+
+! 645 → 646:  300 ft (0.05682 mi),  Config 603
+New Line.645_646
+~ bus1=645.3.1  bus2=646.3.1
+~ linecode=603  length=0.05682  units=mi
+~ phases=2
+
+! ---------------------------------------------------------------------------
+!  671 → 692 tie switch  (3-phase, very low impedance)
+!  Modelled as a short line rather than a switch element for power-flow
+!  compatibility.  Impedance: R_pu=0.002, X_pu=0.005
+! ---------------------------------------------------------------------------
+New Line.671_692
+~ bus1=671  bus2=692
+~ r1=0.00692  x1=0.01731  r0=0.00692  x0=0.01731
+~ c1=0  c0=0  length=1  units=none
+~ phases=3
+
+! 692 → 675:  500 ft (0.09470 mi),  Config 606 (underground)
+New Line.692_675
+~ bus1=692  bus2=675
+~ linecode=606  length=0.09470  units=mi
+~ phases=3
+
+! ---------------------------------------------------------------------------
+!  Spur to 684 and beyond  (Config 604 / 605 / 607)
+! ---------------------------------------------------------------------------
+
+! 650 → 684:  490 ft (0.09280 mi),  Config 604 (2-phase)
+New Line.650_684
+~ bus1=650.1.3  bus2=684.1.3
+~ linecode=604  length=0.09280  units=mi
+~ phases=2
+
+! 684 → 611:  300 ft (0.05682 mi),  Config 605 (single-phase)
+!   This is the DG2 solar feeder spur
+New Line.684_611
+~ bus1=684.1  bus2=611.1
+~ linecode=605  length=0.05682  units=mi
+~ phases=1
+
+! 684 → 652:  800 ft (0.15152 mi),  Config 607 (single-phase underground)
+!   This is the DG3 solar feeder spur
+New Line.684_652
+~ bus1=684.1  bus2=652.1
+~ linecode=607  length=0.15152  units=mi
+~ phases=1

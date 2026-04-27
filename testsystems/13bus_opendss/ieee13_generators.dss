@@ -1,0 +1,98 @@
+! ===========================================================================
+!  ieee13_generators.dss
+!  Distributed generator definitions for the extended IEEE 13-bus feeder.
+!
+!  Three DGs added to the original IEEE 13-bus case:
+!
+!    DG1  Wind turbine    bus_680   rated 600 kW   (3-phase)
+!    DG2  Rooftop solar   bus_611   rated 250 kW   (single-phase)
+!    DG3  Ground-mount    bus_652   rated 150 kW   (single-phase)
+!
+!  During co-simulation, the orchestrator updates kW output each macro step:
+!
+!      # DG1 wind — slow sinusoidal variation
+!      wind_kw = 600 * (0.60 + 0.30 * sin(2*pi*t/180))
+!      dss.run_command(f"Generator.DG1_wind.kW={wind_kw:.2f}")
+!
+!      # DG2/DG3 solar — ramp to peak at t=150s
+!      solar_pu = max(0, 1 - abs(t - 150) / 150)
+!      dss.run_command(f"Generator.DG2_solar.kW={250 * solar_pu:.2f}")
+!      dss.run_command(f"Generator.DG3_solar.kW={150 * solar_pu:.2f}")
+!
+!  Generator model=7 (inverter-based DG) is used for solar/wind.
+!  This disables the voltage-regulation mode and lets the generator
+!  operate at fixed P + power-factor (PF=1.0 for unity).
+!  Unity PF matches the co-simulation model where Q_gen=0 for all DGs.
+!
+!  Dispatch profiles below are used for standalone (non-co-sim) runs.
+! ===========================================================================
+
+! ---------------------------------------------------------------------------
+!  Dispatch loadshapes (standalone / daily mode only)
+!  Co-simulation overrides these values directly each macro step.
+! ---------------------------------------------------------------------------
+
+! Wind: sinusoidal variation 0.30–0.90 pu over ~3-minute period
+! (represented as 24-hour daily shape for static runs)
+New LoadShape.wind_shape
+~ npts=24  interval=1
+~ mult=[0.60 0.55 0.52 0.50 0.52 0.55 0.60 0.65 0.72 0.78 0.82 0.88
+~       0.90 0.88 0.85 0.80 0.75 0.70 0.65 0.60 0.57 0.55 0.53 0.61]
+
+! Solar: ramp up morning, peak noon, ramp down afternoon
+New LoadShape.solar_shape
+~ npts=24  interval=1
+~ mult=[0.00 0.00 0.00 0.00 0.00 0.00 0.05 0.20 0.45 0.65 0.82 0.95
+~       1.00 0.95 0.82 0.65 0.45 0.20 0.05 0.00 0.00 0.00 0.00 0.00]
+
+! ---------------------------------------------------------------------------
+!  DG1 — Wind turbine  (bus 680, 3-phase, 600 kW rated)
+!
+!  Initial dispatch: 600 × (0.60 + 0.30 × sin(0)) = 360 kW
+!  (co-simulation updates this each 0.1 s macro step)
+!
+!  Modelled as a PQ generator (model=1) behind the feeder impedance.
+!  xdpp (subtransient reactance) set to 0.20 pu for fault current calcs.
+! ---------------------------------------------------------------------------
+New Generator.DG1_wind
+~ bus1=680  phases=3  conn=wye
+~ kv=4.16  kW=360  pf=1.0
+~ model=1  vminpu=0.45  vmaxpu=1.50
+~ kva=666.7  xdpp=0.20
+~ daily=wind_shape
+~ enabled=yes
+
+! ---------------------------------------------------------------------------
+!  DG2 — Rooftop solar  (bus 611, single-phase A, 250 kW rated)
+!
+!  Initial dispatch: 0 kW (t=0 is before solar ramp-up in co-simulation)
+!  Bus 611 is single-phase (phase A); generator matches.
+! ---------------------------------------------------------------------------
+New Generator.DG2_solar
+~ bus1=611.1  phases=1  conn=wye
+~ kv=2.4018  kW=0  pf=1.0
+~ model=7  vminpu=0.45  vmaxpu=1.50
+~ kva=277.8  xdpp=0.10
+~ daily=solar_shape
+~ enabled=yes
+
+! ---------------------------------------------------------------------------
+!  DG3 — Ground-mount solar  (bus 652, single-phase A, 150 kW rated)
+!
+!  Initial dispatch: 0 kW (same reason as DG2)
+! ---------------------------------------------------------------------------
+New Generator.DG3_solar
+~ bus1=652.1  phases=1  conn=wye
+~ kv=2.4018  kW=0  pf=1.0
+~ model=7  vminpu=0.45  vmaxpu=1.50
+~ kva=166.7  xdpp=0.10
+~ daily=solar_shape
+~ enabled=yes
+
+! ---------------------------------------------------------------------------
+!  StorageController placeholder  (for future battery storage at bus 634)
+!  Disabled by default — enable and configure for battery co-simulation.
+! ---------------------------------------------------------------------------
+! New StorageController.ESS1  element=Load.datacenter  terminal=1
+! ~ modedischarge=follow  modecharge=loadshape
+! ~ enabled=no

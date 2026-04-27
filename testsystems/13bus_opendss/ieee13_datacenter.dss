@@ -1,0 +1,58 @@
+! ===========================================================================
+!  ieee13_datacenter.dss  —  Master redirect file
+!  IEEE 13-bus distribution feeder extended for datacenter co-simulation
+!
+!  Usage (opendssdirect.py):
+!      import opendssdirect as dss
+!      dss.run_command("Redirect ieee13_datacenter.dss")
+!
+!  Usage (OpenDSS GUI / COM):
+!      Redirect ieee13_datacenter.dss
+!
+!  File set:
+!      ieee13_datacenter.dss   ← this file (master)
+!      ieee13_linecodes.dss    line impedance configurations
+!      ieee13_lines.dss        line and transformer definitions
+!      ieee13_loads.dss        feeder load objects
+!      ieee13_generators.dss   DG1 wind + DG2/DG3 solar generators
+!      ieee13_monitors.dss     monitors and energy meters
+! ===========================================================================
+
+Clear
+
+! ---------------------------------------------------------------------------
+!  System base
+! ---------------------------------------------------------------------------
+Set DefaultBaseFrequency=60
+New Circuit.IEEE13_Datacenter
+~ basekv=4.16 pu=1.0 angle=0 frequency=60
+~ Isc3=100000 Isc1=100000    ! Infinite bus (slack) at substation
+
+! ---------------------------------------------------------------------------
+!  Load component files in order
+! ---------------------------------------------------------------------------
+Redirect ieee13_linecodes.dss
+Redirect ieee13_lines.dss
+Redirect ieee13_loads.dss
+Redirect ieee13_generators.dss
+Redirect ieee13_monitors.dss
+
+! ---------------------------------------------------------------------------
+!  Solution settings
+! ---------------------------------------------------------------------------
+Set VoltageBases=[115, 4.16, 0.48]
+CalcVoltageBases
+
+Set Mode=Snapshot
+Set MaxIter=20
+Set Tolerance=1e-8
+Set Algorithm=Newton
+
+Solve
+
+! ---------------------------------------------------------------------------
+!  Verify initial solution
+! ---------------------------------------------------------------------------
+Show Voltages LN Nodes
+Show Powers MVA Elements
+Show Losses

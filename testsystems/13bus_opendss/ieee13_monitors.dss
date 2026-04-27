@@ -1,0 +1,100 @@
+! ===========================================================================
+!  ieee13_monitors.dss
+!  Monitor and EnergyMeter definitions for the IEEE 13-bus feeder.
+!
+!  Monitors record instantaneous quantities at each solution step.
+!  EnergyMeters accumulate energy and loss totals.
+!
+!  In co-simulation mode, results are read via opendssdirect:
+!
+!      # After each dss.Solution.Solve():
+!      dss.Circuit.SetActiveBus('634')
+!      V_pcc = dss.Bus.VMagAngle()[0] / (480 / sqrt(3))  # → pu (L-N basis)
+!
+!      # Or use monitors for time-series:
+!      dss.Monitors.Name = 'PCC_voltage'
+!      data = dss.Monitors.AsMatrix()   # columns: hour, t, |V|, angle, ...
+!
+!  Monitor mode codes:
+!    mode=0   voltages (magnitude + angle)
+!    mode=1   currents
+!    mode=3   power (kW + kVAR per terminal)
+!    mode=8   load shapes / tap positions
+! ===========================================================================
+
+! ---------------------------------------------------------------------------
+!  Energy meter at feeder head — tracks total feeder energy and losses
+! ---------------------------------------------------------------------------
+New EnergyMeter.feeder_head
+~ element=Line.650_632  terminal=1
+~ option=(E, R, C, V, P)   ! energy, reactive energy, capacity, voltage, power
+
+! ---------------------------------------------------------------------------
+!  Voltage monitors — key buses for co-simulation result extraction
+! ---------------------------------------------------------------------------
+
+! PCC bus (datacenter service transformer secondary, 0.48 kV)
+New Monitor.PCC_voltage
+~ element=Transformer.XFM_634  terminal=2
+~ mode=0  ppolar=no
+
+! Upstream junction bus 632 (main feeder trunk)
+New Monitor.bus632_voltage
+~ element=Line.650_632  terminal=2
+~ mode=0  ppolar=no
+
+! Wind DG bus 680
+New Monitor.bus680_voltage
+~ element=Line.671_680  terminal=2
+~ mode=0  ppolar=no
+
+! Feeder head (bus 650) — substation secondary
+New Monitor.bus650_voltage
+~ element=Transformer.SUB  terminal=2
+~ mode=0  ppolar=no
+
+! ---------------------------------------------------------------------------
+!  Power flow monitors — co-simulation boundary tracking
+! ---------------------------------------------------------------------------
+
+! Datacenter transformer power (both sides)
+New Monitor.datacenter_power
+~ element=Transformer.XFM_634  terminal=2
+~ mode=3  ppolar=no
+
+! Total DG1 wind output
+New Monitor.DG1_power
+~ element=Generator.DG1_wind  terminal=1
+~ mode=3  ppolar=no
+
+! Total DG2 solar output
+New Monitor.DG2_power
+~ element=Generator.DG2_solar  terminal=1
+~ mode=3  ppolar=no
+
+! Total DG3 solar output
+New Monitor.DG3_power
+~ element=Generator.DG3_solar  terminal=1
+~ mode=3  ppolar=no
+
+! ---------------------------------------------------------------------------
+!  Fault monitor — active during fault injection (t=120–122 s)
+! ---------------------------------------------------------------------------
+New Monitor.fault_current
+~ element=Line.650_632  terminal=1
+~ mode=1  ppolar=no
+
+! ---------------------------------------------------------------------------
+!  Frequency and voltage deviation monitor at PCC
+!  (opendssdirect reads this for the co-simulation boundary signal)
+! ---------------------------------------------------------------------------
+New Monitor.PCC_pq
+~ element=Load.datacenter  terminal=1
+~ mode=3  ppolar=no
+
+! ---------------------------------------------------------------------------
+!  Loss monitor — total feeder I²R losses
+! ---------------------------------------------------------------------------
+New Monitor.feeder_losses
+~ element=Transformer.SUB  terminal=1
+~ mode=3  ppolar=no

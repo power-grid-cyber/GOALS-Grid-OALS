@@ -1,0 +1,133 @@
+! ===========================================================================
+!  ieee13_loads.dss
+!  Load objects for the IEEE 13-bus feeder (balanced 3-phase equivalents).
+!
+!  Load model conventions:
+!    model=1  constant power (P + jQ regardless of voltage)  ← default
+!    model=2  constant impedance
+!    model=5  constant current magnitude
+!
+!  All loads use model=1 (constant power) to match the co-simulation
+!  power-flow formulation.
+!
+!  Bus 634 (datacenter) is defined here with its baseline static load
+!  (160 kW + 110 kVAR).  During co-simulation, the orchestrator updates
+!  this load object every macro step:
+!
+!      dss.run_command(f"Load.datacenter.kW={P_dc_kw:.3f}")
+!      dss.run_command(f"Load.datacenter.kvar={Q_dc_kvar:.3f}")
+!
+!  Load summary (from co-simulation network model):
+!    Bus   kW      kVAR
+!    632    60      25
+!    633   170      80
+!    634   160     110   ← datacenter (overridden by co-simulation)
+!    645   170     125
+!    646   230     132
+!    671  1155     660
+!    692   170     151
+!    675   485     190
+!    611   170      80   (also has DG — see ieee13_generators.dss)
+!    652   128      86   (also has DG — see ieee13_generators.dss)
+!  Total: 2898 kW   1639 kVAR  (excl. datacenter co-sim contribution)
+! ===========================================================================
+
+! ---------------------------------------------------------------------------
+!  Bus 632  —  60 kW, 25 kVAR  (3-phase balanced)
+! ---------------------------------------------------------------------------
+New Load.LD632
+~ bus1=632  phases=3  conn=wye
+~ kv=4.16  kW=60  kvar=25
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 633  —  170 kW, 80 kVAR  (3-phase balanced)
+! ---------------------------------------------------------------------------
+New Load.LD633
+~ bus1=633  phases=3  conn=wye
+~ kv=4.16  kW=170  kvar=80
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 634  —  Datacenter PCC  (160 kW baseline, 110 kVAR baseline)
+!
+!  This load is updated every co-simulation macro step (T_macro=0.1 s)
+!  by the orchestrator via:
+!      dss.run_command("Load.datacenter.kW=<value>")
+!      dss.run_command("Load.datacenter.kvar=<value>")
+!
+!  The 0.48 kV secondary of transformer XFM_634 is the PCC voltage bus.
+!  Voltage base for per-unit extraction: 0.48 kV (line-to-line).
+! ---------------------------------------------------------------------------
+New Load.datacenter
+~ bus1=634  phases=3  conn=wye
+~ kv=0.48  kW=160  kvar=110
+~ model=1  vminpu=0.45  vmaxpu=1.50
+~ daily=datacenter_shape    ! shape overridden per macro-step; defined here for static runs
+
+! ---------------------------------------------------------------------------
+!  Bus 645  —  170 kW, 125 kVAR  (2-phase, phases A and C)
+! ---------------------------------------------------------------------------
+New Load.LD645
+~ bus1=645.3.1  phases=2  conn=wye
+~ kv=2.4018  kW=170  kvar=125
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 646  —  230 kW, 132 kVAR  (2-phase, phases A and C)
+! ---------------------------------------------------------------------------
+New Load.LD646
+~ bus1=646.3.1  phases=2  conn=delta
+~ kv=4.16  kW=230  kvar=132
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 671  —  1155 kW, 660 kVAR  (3-phase balanced — largest load)
+! ---------------------------------------------------------------------------
+New Load.LD671
+~ bus1=671  phases=3  conn=wye
+~ kv=4.16  kW=1155  kvar=660
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 692  —  170 kW, 151 kVAR  (3-phase balanced)
+! ---------------------------------------------------------------------------
+New Load.LD692
+~ bus1=692  phases=3  conn=wye
+~ kv=4.16  kW=170  kvar=151
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 675  —  485 kW, 190 kVAR  (3-phase balanced)
+! ---------------------------------------------------------------------------
+New Load.LD675
+~ bus1=675  phases=3  conn=wye
+~ kv=4.16  kW=485  kvar=190
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 611  —  170 kW, 80 kVAR  (single-phase, phase C)
+!  Note: DG2 solar generator is also connected at this bus.
+! ---------------------------------------------------------------------------
+New Load.LD611
+~ bus1=611.1  phases=1  conn=wye
+~ kv=2.4018  kW=170  kvar=80
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Bus 652  —  128 kW, 86 kVAR  (single-phase, phase A)
+!  Note: DG3 solar generator is also connected at this bus.
+! ---------------------------------------------------------------------------
+New Load.LD652
+~ bus1=652.1  phases=1  conn=wye
+~ kv=2.4018  kW=128  kvar=86
+~ model=1  vminpu=0.50  vmaxpu=1.50
+
+! ---------------------------------------------------------------------------
+!  Loadshape placeholder for datacenter (used in daily/duty-cycle runs)
+!  During co-simulation this is not used — loads are updated directly.
+! ---------------------------------------------------------------------------
+New LoadShape.datacenter_shape
+~ npts=24  interval=1
+~ mult=[0.60 0.58 0.57 0.56 0.57 0.60 0.68 0.78 0.86 0.88 0.87 0.88
+~       0.90 0.90 0.89 0.88 0.87 0.86 0.84 0.82 0.80 0.76 0.70 0.64]
