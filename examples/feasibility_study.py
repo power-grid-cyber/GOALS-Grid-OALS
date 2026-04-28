@@ -3,7 +3,7 @@ feasibility_study.py
 ====================
 Transmission Interconnection Feasibility Study
 ===============================================
-Part of the OASIS / GOALS framework.
+Part of the GOALS framework.
 
 Answers the first question in a formal FERC Large Load Interconnection
 Feasibility Study:
@@ -11,33 +11,6 @@ Feasibility Study:
     "At what datacenter size does the requested point of interconnection
      become thermally, economically, or operationally infeasible — and
      under which operating conditions does each limit bind first?"
-
-Four datacenter sizes are tested across a 24-hour horizon:
-
-    DC1:    100 MW   (large campus, single building cluster)
-    DC2:    250 MW   (hyperscale, equivalent ~25,000 H100 GPUs)
-    DC3:    430 MW   (very large campus, multi-building)
-    DC4:  500 MW   (gigawatt-class AI training facility)
-
-Each size is evaluated against three feasibility criteria:
-
-    1. Thermal   — area import at bus 16 vs. interface limit [MW]
-    2. Voltage   — bus 16 PCC voltage vs. ANSI C84.1 Range A [pu]
-    3. Economic  — congestion premium at bus 16 [$/MWh]
-
-Output
-------
-A single four-panel figure, one panel per feasibility criterion plus a
-summary panel, with all four datacenter sizes overlaid and the binding
-constraint clearly marked.  This figure is the primary deliverable of the
-Feasibility Study phase and is suitable for direct inclusion in an
-interconnection study report.
-
-    feasibility_hosting_capacity.png
-
-Run
----
-    python feasibility_study.py
 
 Dependencies
 ------------
