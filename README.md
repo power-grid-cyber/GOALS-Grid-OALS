@@ -7,7 +7,7 @@ The framework is the software companion to the paper:
 > *"A Modular Open-Source AI-Datacenter Simulator for Grid Impact Analysis"*  
 > IEEE Transactions on Power Delivery (under review)
 
-### What OASIS does
+### What GOALS does
 
 - Models an AI datacenter with stochastic **GPU workload traces** (4 archetypes), a **3rd-order induction-machine HVAC model**, and an **IEEE 1547-2018 Category III grid-supporting VSC**
 - Couples the datacenter to a **distribution network** (IEEE 13-bus, 4.16 kV) via a Gauss–Seidel predictor-corrector co-simulation engine
@@ -150,7 +150,7 @@ register("dc_500mw", {
 
 ## Citation
 
-If you use OASIS in your research, please cite:
+If you use GOALS in your research, please cite:
 
 ```bibtex
 @article{goals2026,
@@ -158,7 +158,7 @@ If you use OASIS in your research, please cite:
   author  = {{GOALS Development Team}},
   journal = {IEEE Transactions on Power Delivery},
   year    = {2026},
-  note    = {Under review. Code: https://github.com/example-org/oasis-simulator}
+  note    = {Under review. Code: https://github.com/example-org/GOALS-simulator}
 }
 ```
 
