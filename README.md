@@ -151,6 +151,16 @@ register("dc_500mw", {
 ## Citation
 
 If you use GOALS in your research, please cite:
+```bibtex
+@INPROCEEDINGS{oals2026,
+  author={Sreejith, Amulya and Natarajan, Balasubramaniam},
+  booktitle={2026 IEEE Power & Energy Society General Meeting (PESGM)}, 
+  title={OALS: An Open source AI-Datacenter Load Simulator for Grid Impact Analysis}, 
+  year={2026},
+  volume={},
+  number={},
+  pages={1-5}}
+```
 
 ```bibtex
 @article{goals2026,
