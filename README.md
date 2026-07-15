@@ -165,8 +165,8 @@ If you use GOALS in your research, please cite:
 ```bibtex
 @article{goals2026,
   title   = {GOALS: A Grid-aware Open source AI-Datacenter Load Simulator for Impact Analysis},
-  author  = {{GOALS Development Team}},
-  journal = {IEEE Transactions on Power Delivery},
+  author  = {Sreejith, Amulya and Pradeep, Adwaitha and Natarajan, Balasubramaniam},
+  journal = {IEEE Transactions on Power Systems},
   year    = {2026},
   note    = {Under review. Code: https://github.com/example-org/GOALS-simulator}
 }
